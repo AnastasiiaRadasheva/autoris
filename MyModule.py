@@ -62,7 +62,7 @@ def sisselogimine():
             parool = input("Sisestage oma parool: ")
             if parool_list[i] == parool:
                 print("Sisselogimine edukas!")
-                return login  # Tagastab sisse logitud kasutajanime
+                return login  
             else:
                 print("Vale parool! Proovi uuesti.")
     else:
