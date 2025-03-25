@@ -1,7 +1,7 @@
 import random
 
-login_list = ["gh"]
-parool_list = ["9"]
+login_list = ["es"]
+parool_list = ["123"]
 
 def log(login: str) -> bool:
     """Kontrollib, kas kasutajanimi on süsteemis."""
