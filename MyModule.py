@@ -1,8 +1,28 @@
 import random
 import smtplib, ssl
 from email.message import EmailMessage
-from tkinter import filedialog
 import os
+
+FILENAME = "module1.txt"
+
+login_list = []
+parool_list = []
+
+def lae_kasutajad_failist():
+    """Laeb olemasolevad kasutajad failist mällu."""
+    if os.path.exists(FILENAME):
+        with open(FILENAME, "r", encoding="utf-8") as f:
+            for rida in f:
+                if "-" in rida:
+                    login, parool = rida.strip().split("-", 1)
+                    login_list.append(login)
+                    parool_list.append(parool)
+
+def salvesta_kasutajad_faili():
+    """Salvestab kõik kasutajad faili."""
+    with open(FILENAME, "w", encoding="utf-8") as f:
+        for login, parool in zip(login_list, parool_list):
+            f.write(f"{login}-{parool}\n")
 
 def saada_kiri(kellele, teema, html_sisu):
     smtp_server = 'smtp.gmail.com'
@@ -14,13 +34,9 @@ def saada_kiri(kellele, teema, html_sisu):
     msg['Subject'] = teema
     msg['From'] = kellelt
     msg['To'] = kellele
-
     text_sisu = "Tere! Kui sa ei näe seda kirja õigesti, palun lülita sisse HTML kuvamine."
     msg.set_content(text_sisu)
     msg.add_alternative(html_sisu, subtype='html')
-
-    # Не добавляем изображение, только обычный email
-    print('Kiri saadetud')
 
     try:
         context = ssl.create_default_context()
@@ -33,7 +49,6 @@ def saada_kiri(kellele, teema, html_sisu):
         print(f"Viga e-kirja saatmisel: {e}")
 
 def registreeri():
-    """Регистрация нового пользователя и отправка письма."""
     while True:
         kellele = input('Mis on sinu epost? ')
         login = input("Sisestage uus kasutajanimi: ")
@@ -41,10 +56,10 @@ def registreeri():
             print("See kasutajanimi on juba hõivatud! Proovige uuesti.")
         else:
             break
+
     login_list.append(login)
 
     valik = input("Kas soovite parooli genereerida? (jah/ei): ").lower()
-    
     if valik == "jah":
         uus_parool = genereeri_parool()
         print(f"Teie uus parool on: {uus_parool}")
@@ -56,55 +71,30 @@ def registreeri():
             print("Parool peab olema vähemalt 8 tähemärki pikk!")
 
     parool_list.append(uus_parool)
+    salvesta_kasutajad_faili()
+    print("Registreerimine edukas!")
 
-    # Save the new user to 'module1.txt' file
-    try:
-        with open("module1.txt", "a", encoding="utf-8") as fail:
-            fail.write(f"{login}-{uus_parool}\n")
-        print("Registreerimine edukas!")
-    except Exception as e:
-        print(f"Viga faili kirjutamisel: {e}")
-
-    # Sending email to user
     teema = 'Uue konto loomine'
     html_sisu = f"""\
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-            h1 {{ color: #ff0000; }}
-            p {{ font-size: 12px; }}
-            a {{ color: #008000; }}
-        </style>
-    </head>
-    <body>
-        <h1>Uue konto loomine edukas!</h1>
-        <p>Tere {login},</p>
-        <p>Teie konto on edukalt loodud. Kasutage järgmisi andmeid sisse logimiseks:</p>
-        <p>Kasutajanimi: {login}</p>
-        <p>Parool: {uus_parool}</p>
-        <p><b>Soovime teile head kasutamist!</b></p>
-    </body>
-    </html>
+    <html><body>
+    <h1>Uue konto loomine edukas!</h1>
+    <p>Tere {login},</p>
+    <p>Kasutajanimi: {login}</p>
+    <p>Parool: {uus_parool}</p>
+    </body></html>
     """
     saada_kiri(kellele, teema, html_sisu)
-login_list = []
-parool_list = []
 
 def log(login: str) -> bool:
-    """Kontrollib, kas kasutajanimi on süsteemis."""
     return login in login_list
 
 def login_parool(login: str, parool: str) -> bool:
-    """Kontrollib, kas parool vastab kasutajanimele."""
     if login in login_list:
         i = login_list.index(login)
         return parool_list[i] == parool
     return False
 
 def genereeri_parool():
-    """Genereerib juhusliku 8-tähelise parooli."""
     str0 = "!#¤%&/()=?"
     str1 = '1234567890'
     str2 = 'qwertyuiopüõasdfghjklöäzxcvbnm'
@@ -113,20 +103,17 @@ def genereeri_parool():
     return ''.join(random.choice(str4) for _ in range(8))
 
 def parooli_kontroll(parool: str) -> bool:
-    """Kontrollib, kas parool on vähemalt 8 tähemärki pikk."""
     return len(parool) >= 8
 
 def sisselogimine():
-    """Kasutaja saab sisse logida."""
     login = input("Sisestage oma kasutajanimi: ")
-
     if login in login_list:
         i = login_list.index(login)
         while True:
             parool = input("Sisestage oma parool: ")
             if parool_list[i] == parool:
                 print("Sisselogimine edukas!")
-                return login  
+                return login
             else:
                 print("Vale parool! Proovi uuesti.")
     else:
@@ -134,9 +121,7 @@ def sisselogimine():
     return None
 
 def muuda_andmeid():
-    """Lubab muuta kasutajanime või parooli."""
     login = input("Sisestage oma kasutajanimi: ")
-
     if login in login_list:
         i = login_list.index(login)
         print("Mida soovite muuta?")
@@ -162,17 +147,15 @@ def muuda_andmeid():
 
         else:
             print("Vale valik!")
+        salvesta_kasutajad_faili()
     else:
         print("Sellist kasutajat pole süsteemis!")
 
 def unusta_parool():
-    """Võimaldab kasutajal parooli taastada."""
     login = input("Sisestage oma kasutajanimi: ")
-
     if login in login_list:
         i = login_list.index(login)
         valik = input("Kas soovite ise uue parooli luua või lasta see genereerida? (I/G): ").lower()
-
         if valik == "g":
             uus_parool = genereeri_parool()
             print(f"Teie uus parool on: {uus_parool}")
@@ -182,8 +165,11 @@ def unusta_parool():
                 if parooli_kontroll(uus_parool):
                     break
                 print("Parool peab olema vähemalt 8 tähemärki pikk!")
-
         parool_list[i] = uus_parool
         print("Teie parool on edukalt muudetud!")
+        salvesta_kasutajad_faili()
     else:
         print("Sellist kasutajanime pole süsteemis!")
+
+# Laadime olemasolevad kasutajad mällu
+lae_kasutajad_failist()
